@@ -1,0 +1,38 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build-agent:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.21'
+    - name: Build Node Agent
+      working-directory: ./execute-node-agent
+      run: |
+        go build -o execute-node-agent.exe ./cmd/agent/main.go
+    - name: Run Tests
+      working-directory: ./execute-node-agent
+      run: go test ./...
+
+  build-frontend:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18.x'
+    - name: Install & Build
+      working-directory: ./saas-portal/frontend
+      run: |
+        npm ci
+        npm run build

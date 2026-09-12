@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+sqlalchemy
+alembic
+psycopg2-binary
+celery
+redis
+stripe
+flask-cors
+python-multipart
+passlib[bcrypt]
+pyjwt

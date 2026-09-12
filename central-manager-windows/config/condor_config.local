@@ -1,0 +1,55 @@
+# ====================================================================
+# HTCONDOR CENTRAL MANAGER CONFIGURATION (WINDOWS NATIVE)
+# ====================================================================
+
+# -----------------------------
+# 1. Core Daemon Selection
+# -----------------------------
+# The Central Manager runs the Collector (state DB), Negotiator (matchmaker),
+# and Schedd (job queue / submit API).
+DAEMON_LIST = MASTER, COLLECTOR, NEGOTIATOR, SCHEDD
+
+# -----------------------------
+# 2. Host and Network
+# -----------------------------
+# Bind to all interfaces to accept incoming grid connections
+CONDOR_HOST = $(FULL_HOSTNAME)
+NETWORK_INTERFACE = *
+
+# Define the local Windows paths explicitly for clarity
+LOCAL_DIR = C:\condor\local
+RELEASE_DIR = C:\condor
+
+# -----------------------------
+# 3. Security & Token Infrastructure
+# -----------------------------
+# We strictly rely on IDTOKENS for authentication to avoid X509 headaches.
+SEC_DEFAULT_AUTHENTICATION_METHODS = IDTOKENS
+SEC_CLIENT_AUTHENTICATION_METHODS = IDTOKENS
+
+# The central manager must act as the Token Issuer
+SEC_TOKEN_POOL_SIGNING_KEY_FILE = $(LOCAL_DIR)\passwords.d\POOL
+
+# Require encryption and integrity for all network traffic across the grid
+SEC_DEFAULT_ENCRYPTION = REQUIRED
+SEC_DEFAULT_INTEGRITY = REQUIRED
+
+# Authorization: Only authenticated tokens can read/write to the collector
+ALLOW_READ = *
+ALLOW_WRITE = *
+ALLOW_NEGOTIATOR = $(CONDOR_HOST)
+ALLOW_ADMINISTRATOR = $(CONDOR_HOST)
+
+# -----------------------------
+# 4. Negotiator / Matchmaking Optimization
+# -----------------------------
+# For a SaaS cycle-scavenging pool, we want rapid matchmaking cycles
+NEGOTIATOR_INTERVAL = 30
+NEGOTIATOR_UPDATE_INTERVAL = 60
+
+# -----------------------------
+# 5. Schedd API Settings
+# -----------------------------
+# Optional tuning for the submit API (e.g. your Python/Spring Boot backend)
+SCHEDD_INTERVAL = 15
+MAX_JOBS_RUNNING = 5000

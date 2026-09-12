@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: saas-mock-backend
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python mock_backend.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: STRIPE_SECRET_KEY
+        sync: false

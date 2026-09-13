@@ -7,8 +7,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/stdcopy"
@@ -30,7 +30,7 @@ func NewDockerSupervisor() (*DockerSupervisor, error) {
 // RunJob pulls the image, creates a container, runs it, streams logs, and removes it.
 func (ds *DockerSupervisor) RunJob(ctx context.Context, imageName string, cmd []string) error {
 	log.Printf("Pulling Docker image %s...", imageName)
-	reader, err := ds.cli.ImagePull(ctx, imageName, image.PullOptions{})
+	reader, err := ds.cli.ImagePull(ctx, imageName, types.ImagePullOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to pull image: %w", err)
 	}
@@ -65,16 +65,16 @@ func (ds *DockerSupervisor) RunJob(ctx context.Context, imageName string, cmd []
 	// Ensure container is removed when we are done
 	defer func() {
 		log.Printf("Cleaning up container %s...", containerID[:10])
-		ds.cli.ContainerRemove(context.Background(), containerID, container.RemoveOptions{Force: true})
+		ds.cli.ContainerRemove(context.Background(), containerID, types.ContainerRemoveOptions{Force: true})
 	}()
 
 	log.Printf("Starting container %s...", containerID[:10])
-	if err := ds.cli.ContainerStart(ctx, containerID, container.StartOptions{}); err != nil {
+	if err := ds.cli.ContainerStart(ctx, containerID, types.ContainerStartOptions{}); err != nil {
 		return fmt.Errorf("failed to start container: %w", err)
 	}
 
 	// Stream logs
-	out, err := ds.cli.ContainerLogs(ctx, containerID, container.LogsOptions{ShowStdout: true, ShowStderr: true, Follow: true})
+	out, err := ds.cli.ContainerLogs(ctx, containerID, types.ContainerLogsOptions{ShowStdout: true, ShowStderr: true, Follow: true})
 	if err != nil {
 		return fmt.Errorf("failed to get container logs: %w", err)
 	}
@@ -108,7 +108,7 @@ func (ds *DockerSupervisor) StartInferenceServer(ctx context.Context, imageName 
 	log.Printf("Deploying model %s using image %s...", modelPath, imageName)
 	
 	// Ensure image exists or pull
-	_, err := ds.cli.ImagePull(ctx, imageName, image.PullOptions{})
+	_, err := ds.cli.ImagePull(ctx, imageName, types.ImagePullOptions{})
 	if err != nil {
 		log.Printf("Failed to pull inference image, might already exist: %v", err)
 	}
@@ -132,7 +132,7 @@ func (ds *DockerSupervisor) StartInferenceServer(ctx context.Context, imageName 
 		return "", fmt.Errorf("failed to create inference container: %w", err)
 	}
 
-	if err := ds.cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+	if err := ds.cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		return "", fmt.Errorf("failed to start inference container: %w", err)
 	}
 
@@ -146,7 +146,7 @@ func (ds *DockerSupervisor) StartJupyterLab(ctx context.Context, modelPath strin
 	imageName := "jupyter/scipy-notebook"
 	log.Printf("Starting interactive Jupyter session using %s...", imageName)
 	
-	_, err := ds.cli.ImagePull(ctx, imageName, image.PullOptions{})
+	_, err := ds.cli.ImagePull(ctx, imageName, types.ImagePullOptions{})
 	if err != nil {
 		log.Printf("Failed to pull jupyter image: %v", err)
 	}
@@ -173,7 +173,7 @@ func (ds *DockerSupervisor) StartJupyterLab(ctx context.Context, modelPath strin
 		return "", fmt.Errorf("failed to create jupyter container: %w", err)
 	}
 
-	if err := ds.cli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+	if err := ds.cli.ContainerStart(ctx, resp.ID, types.ContainerStartOptions{}); err != nil {
 		return "", fmt.Errorf("failed to start jupyter container: %w", err)
 	}
 
